@@ -1,0 +1,175 @@
+'''
+This is a classic snake game built using Python and the Pygame library. Players control a snake navigating a grid-based environment to collect blocks
+which increases the snake's length and score. The challenge lies in avoiding collisions with the snake's body and the screen edges as the snake grows longer
+The game includes a real-time score tracker and a high-score feature. When the game is over, players can restart the game with a  "Play Again" button 
+
+'''
+import pygame
+import time
+import random
+
+# Game settings
+snake_speed = 15
+window_x = 720
+window_y = 480
+
+# Colors
+black = pygame.Color(0, 0, 0)
+white = pygame.Color(255, 255, 255)
+red = pygame.Color(255, 0, 0)
+green = pygame.Color(0, 255, 0)
+blue = pygame.Color(0, 0, 255)
+
+# Initialize pygame
+pygame.init()
+pygame.display.set_caption('Snake Game')
+game_window = pygame.display.set_mode((window_x, window_y))
+
+# FPS 
+fps = pygame.time.Clock()
+
+# High score 
+high_score = 0
+
+# Function to display score
+def show_score(choice, color, font, size, score, high_score):
+    score_font = pygame.font.SysFont(font, size)
+    score_surface = score_font.render(f'Score : {score}  High Score : {high_score}', True, color)
+    score_rect = score_surface.get_rect()
+    if choice == 1:
+        score_rect.topleft = (10, 10)
+    else:
+        score_rect.center = (window_x / 2, window_y / 2)
+    game_window.blit(score_surface, score_rect)
+
+# Function to display play again button
+def play_again_button():
+    button_font = pygame.font.SysFont('times new roman', 30)
+    button_surface = button_font.render('Play Again', True, black, white)
+    button_rect = button_surface.get_rect()
+    button_rect.center = (window_x / 2, window_y / 1.5)
+    game_window.blit(button_surface, button_rect)
+    pygame.display.flip()
+    return button_rect
+
+# Function to end the game
+def game_over(score, high_score):
+    global snake_position, snake_body, direction, change_to, fruit_position, fruit_spawn
+
+    # Update high score
+    if score > high_score:
+        high_score = score
+
+    # Display game over message
+    my_font = pygame.font.SysFont('times new roman', 50)
+    game_over_surface = my_font.render('Your Score is: ' + str(score), True, red)
+    game_over_rect = game_over_surface.get_rect()
+    game_over_rect.midtop = (window_x / 2, window_y / 4)
+    game_window.blit(game_over_surface, game_over_rect)
+
+    # Display play again button
+    button_rect = play_again_button()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    main(high_score)
+
+# Main game loop
+def main(high_score):
+    global snake_position, snake_body, direction, change_to, fruit_position, fruit_spawn
+
+    # Initialize variables
+    snake_position = [100, 50]
+    snake_body = [[100, 50], [90, 50], [80, 50], [70, 50]]
+    fruit_position = [random.randrange(1, (window_x // 10)) * 10,
+                      random.randrange(1, (window_y // 10)) * 10]
+    fruit_spawn = True
+    direction = 'RIGHT'
+    change_to = direction
+    score = 0
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    change_to = 'UP'
+                if event.key == pygame.K_DOWN:
+                    change_to = 'DOWN'
+                if event.key == pygame.K_LEFT:
+                    change_to = 'LEFT'
+                if event.key == pygame.K_RIGHT:
+                    change_to = 'RIGHT'
+
+        # Ensure the snake cannot move in the opposite direction instantaneously
+        if change_to == 'UP' and direction != 'DOWN':
+            direction = 'UP'
+        if change_to == 'DOWN' and direction != 'UP':
+            direction = 'DOWN'
+        if change_to == 'LEFT' and direction != 'RIGHT':
+            direction = 'LEFT'
+        if change_to == 'RIGHT' and direction != 'LEFT':
+            direction = 'RIGHT'
+
+        # Move the snake
+        if direction == 'UP':
+            snake_position[1] -= 10
+        if direction == 'DOWN':
+            snake_position[1] += 10
+        if direction == 'LEFT':
+            snake_position[0] -= 10
+        if direction == 'RIGHT':
+            snake_position[0] += 10
+
+        # Snake body growing mechanism
+        snake_body.insert(0, list(snake_position))
+        if snake_position[0] == fruit_position[0] and snake_position[1] == fruit_position[1]:
+            score += 10
+            fruit_spawn = False
+        else:
+            snake_body.pop()
+
+        if not fruit_spawn:
+            fruit_position = [random.randrange(1, (window_x // 10)) * 10,
+                              random.randrange(1, (window_y // 10)) * 10]
+        fruit_spawn = True
+
+        # Drawing the game elements
+        game_window.fill(black)
+        for pos in snake_body:
+            pygame.draw.rect(game_window, green, pygame.Rect(pos[0], pos[1], 10, 10))
+        pygame.draw.rect(game_window, white, pygame.Rect(fruit_position[0], fruit_position[1], 10, 10))
+
+        # Game Over conditions
+        if snake_position[0] < 0 or snake_position[0] > window_x - 10:
+            game_over(score, high_score)
+        if snake_position[1] < 0 or snake_position[1] > window_y - 10:
+            game_over(score, high_score)
+        for block in snake_body[1:]:
+            if snake_position[0] == block[0] and snake_position[1] == block[1]:
+                game_over(score, high_score)
+
+        # Display score continuously
+        show_score(1, white, 'times new roman', 20, score, high_score)
+
+        # Refresh game screen
+        pygame.display.update()
+
+        # Frame Per Second /Refresh Rate
+        fps.tick(snake_speed)
+
+# Run the game
+main(high_score)
+
+
+    
+
+
+
